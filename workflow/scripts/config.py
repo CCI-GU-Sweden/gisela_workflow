@@ -1,15 +1,31 @@
 import dotenv
 import os
 
+DEBUGGING = True
+
 dotenv.load_dotenv()
 
-IMG_SIZE = 512
+IMG_SIZE = 1024
+NETWORK_SIZE = IMG_SIZE
+OVERLAP = 24
+CHUNK_D_SIZE = IMG_SIZE - (2 * OVERLAP)
+CHUNK_SHAPE = (CHUNK_D_SIZE,CHUNK_D_SIZE,1)
+
+
 MIN_LABELS_PER_IMAGE = 2
 MIN_COVERAGE = 0.2
 
 SHOW_IMAGES = False
-CLEAR_OUTPUT_DIR = False
+CLEAR_OUTPUT_DIR = DEBUGGING
 
 ORG_ID = os.getenv("ORG_ID")
 WK_TOKEN = os.getenv("WK_TOKEN")
+
+TRAINING_DATASET_FILE = "datasets/dataset.yaml"
+TRAINING_EPOCHS = 300
+
+MODEL_SAVE_FILE_NAME = "latest_model.pt"
+
+TEST_DATA_DIR = "dl/test_data/"
+TEST_IMAGE_RESULT_FILE_NAME = "result.png"
         

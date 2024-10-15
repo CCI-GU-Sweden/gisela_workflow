@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import webknossos as wk
+from webknossos_utils import Pixel_size
 from skimage import measure
 
 import dask.array as da
@@ -65,13 +66,15 @@ for wkid in wk_id_list:
         mag_list = list(img_layer.mags.keys())
         
         MAG = mag_list[3]
-        img_data = img_layer.get_mag(MAG).read()
-        lbl_data = lbl_layers[label_indices["Myelin"]].get_mag(MAG).read()
+        pSize = Pixel_size(voxel_size[0] * MAG.x, voxel_size[1] * MAG.y, voxel_size[2] * MAG.z, MAG=MAG, unit="nm")
+
+        img_data = img_layer.get_mag(pSize.MAG).read()
+        lbl_data = lbl_layers[label_indices["Myelin"]].get_mag(pSize.MAG).read()
 
     unique_lbls = np.unique(lbl_data)
 
-    if np.max(unique_lbls) < 512:
-        lbl_data = lbl_data.astype(np.uint8)
+    # if np.max(unique_lbls) < :
+    #     lbl_data = lbl_data.astype(np.uint8)
 
     lbl_dask = da.from_array(np.swapaxes(lbl_data,-1,-3), chunks=(1,5,512,512))
 
@@ -86,8 +89,8 @@ for wkid in wk_id_list:
 
     #construct WK bbox from large_bbox
     wk_bbox = wk.BoundingBox(topleft=(x_min,y_min,0), size=(x_max-x_min,y_max-y_min,1))
-    wk_bbox = wk_bbox.align_with_mag(MAG,ceil=True)
-    wk_bbox = wk_bbox.from_mag_to_mag1(MAG)
+    wk_bbox = wk_bbox.align_with_mag(pSize.MAG,ceil=True)
+    wk_bbox = wk_bbox.from_mag_to_mag1(pSize.MAG)
 
     with wk.webknossos_context():
         img_data_small = img_layer.get_finest_mag().read(absolute_bounding_box=wk_bbox)
@@ -116,7 +119,7 @@ for wkid in wk_id_list:
     idx = 0
     for y in range(img_y_div):
         for x in range(img_x_div):
-            # print(f"x: {x}, y: {y}")
+            print(f"x: {x}, y: {y}")
             start_x = x * im_size
             start_y = y * im_size
             end_x = start_x + im_size
@@ -125,7 +128,7 @@ for wkid in wk_id_list:
             active_img_chunk = img_dask_cropped[start_y:end_y,start_x:end_x]
 
             regions = measure.regionprops(label_image=active_lbl_chunk)
-##            reg_table = pd.DataFrame(reg_table)
+
             tot_elems = len(regions)
 
             if tot_elems == 0:

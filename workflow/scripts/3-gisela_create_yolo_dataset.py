@@ -3,6 +3,8 @@ import os
 import glob
 import shutil
 
+import config
+
 dataset_path = str(os.getcwd()) + "/datasets/"
 img_train_path = dataset_path + "images/train/"
 img_val_path = dataset_path + "images/val/"
@@ -15,12 +17,13 @@ Path(img_val_path).mkdir(parents=True, exist_ok=True)
 Path(labels_train_path).mkdir(parents=True, exist_ok=True)
 Path(labels_val_path).mkdir(parents=True, exist_ok=True)
 
-files = glob.glob(img_train_path+"/*.png")
-files += glob.glob(img_val_path+"/*.png")
-files += (glob.glob(labels_train_path+"/*.txt"))
-files += (glob.glob(labels_val_path+"/*.txt"))
-for f in files:
-    os.remove(f)
+if config.CLEAR_OUTPUT_DIR:
+    files = glob.glob(img_train_path+"/*.png")
+    files += glob.glob(img_val_path+"/*.png")
+    files += (glob.glob(labels_train_path+"/*.txt"))
+    files += (glob.glob(labels_val_path+"/*.txt"))
+    for f in files:
+        os.remove(f)
     
 dl_path = str(os.getcwd()) + "/dl/"
 img_dl_path = dl_path + "images/"
@@ -49,7 +52,7 @@ if dataset_file.is_file():
     sys.exit()
     
 dataset_file.open(mode="x")
-dataset_file.write_text(f"path: {dataset_path}/\ntrain: images/train/\nval: images/val/\n\nnames:\n  0: myelin_sheet")
+dataset_file.write_text("train: ./images/train/\nval: ./images/val/\n\nnames:\n  0: myelin_sheet")
 
 
 
