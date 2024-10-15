@@ -1,0 +1,13 @@
+name: webknossos
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10.14
+  - pip=24.2
+  - pip:
+      - numpy==2.1.0
+      - webknossos==0.15.2
+      - cattrs==23.2.3
+      - pillow==10.4.0
+      - scikit-image==0.24.0
+      - dask==2024.8.1

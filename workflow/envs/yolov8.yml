@@ -1,0 +1,9 @@
+name: yolov8
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12.5
+  - pip=24.2
+  - pip:
+      - ultralytics==8.2.82

@@ -1,0 +1,61 @@
+
+rule download_annotations:
+    input:
+        f"{workflow.basedir}/scripts/1-gisela_dl_annotations_and_images.py"
+    output:  #output dir should be configurable and sent to script
+        images=directory("dl/images/"),
+        annotations=directory("dl/annotations/")
+    conda:
+        f"{workflow.basedir}/envs/webknossos.yml"
+    script:
+        f"{input}"
+
+rule create_vector_files_yolo:
+    input:
+        annotations=rules.download_annotations.output.annotations
+    output:  #output dir should be configurable and sent to script
+        vectors=directory("dl/vectors/")
+    conda:
+        f"{workflow.basedir}/envs/webknossos.yml"
+    script:
+        f"{workflow.basedir}/scripts/2-create_yolov8_vectors_from_annotations.py"
+
+rule create_yolo_dataset:
+    input:
+        rules.create_vector_files_yolo.output.vectors
+    output:  #output dir should be configurable and sent to script
+        dataset=directory("datasets")
+    script:
+        f"{workflow.basedir}/scripts/3-gisela_create_yolo_dataset.py"
+
+rule dl_test_images:
+    input:
+        f"{workflow.basedir}/scripts/4-dl_test_images_for_yolo.py"
+    output:
+        directory("dl/test_data")
+    conda:
+        f"{workflow.basedir}/envs/webknossos.yml"
+    script:
+        f"{input}"
+
+rule yolo_train:
+    input:
+        rules.create_yolo_dataset.output.dataset
+    conda:
+        f"{workflow.basedir}/envs/yolov8.yml"
+    shell:
+        f"yolo segment train data={os.getcwd()}/datasets/dataset.yaml epochs=50 imgsz=512"
+    
+#rule yolo_segment:
+
+
+
+rule all:
+    input:
+        rules.create_yolo_dataset.output.dataset
+
+
+# rule hello:
+#     output: 'output.txt'
+#     shell:
+#         'echo hello world > {output}'
