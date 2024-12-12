@@ -1,4 +1,3 @@
-
 rule download_annotations:
     input:
         f"{workflow.basedir}/scripts/1-gisela_dl_annotations_and_images.py"
@@ -25,6 +24,8 @@ rule create_yolo_dataset:
         rules.create_vector_files_yolo.output.vectors
     output:  #output dir should be configurable and sent to script
         dataset=directory("datasets")
+    conda:
+        f"{workflow.basedir}/envs/webknossos.yml"
     script:
         f"{workflow.basedir}/scripts/3-gisela_create_yolo_dataset.py"
 
@@ -38,6 +39,15 @@ rule dl_test_images:
     script:
         f"{input}"
 
+rule yolo_train_py:
+    input: 
+        rules.create_yolo_dataset.output.dataset
+    conda:
+        f"{workflow.basedir}/envs/yolov8.yml"
+    script:
+        f"{workflow.basedir}/scripts/train_yolo_model.py"
+
+
 rule yolo_train:
     input:
         rules.create_yolo_dataset.output.dataset
@@ -48,11 +58,10 @@ rule yolo_train:
     
 #rule yolo_segment:
 
-
-
 rule all:
     input:
         rules.create_yolo_dataset.output.dataset
+
 
 
 # rule hello:
