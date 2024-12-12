@@ -6,9 +6,9 @@ import torch
 
 
 #TODO: read path from confg? And if it does not exist, do magic below
-file_dir = Path(__file__).parent.resolve()
-base = file_dir
-#base = os.getcwd()
+#file_dir = Path(__file__).parent.resolve()
+#base = file_dir
+base = os.getcwd()
 dataSetFile = str(base) + "/" + config.TRAINING_DATASET_FILE
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"]="expandable_segments:True"
