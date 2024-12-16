@@ -12,19 +12,24 @@ import glob
 
 import config
 
-#SHOW_IMAGES = False
-#CLEAR_OUTPUT_DIR = False
+#USE_MYELIN = True
 
 
-#AUTH_TOKEN = "S-QRDIegZYX0IM1lXmyiJg" #2024-07-04
-#WK_TIMEOUT="3600" # in seconds
-#ORG_ID = "83d574429f8bc523" # gisela's webknossos
+label_str = config.ANNOTATION_LAYER_NAME
+wk_id_list = config.WK_ID_LIST
 
-id_1 = "6644c04d0100004a01fa11af"
-id_2 = "664316880100008a049e890e"
-id_3 = "664606440100005102550210"
+# id_1 = "6644c04d0100004a01fa11af"
+# id_2 = "664316880100008a049e890e"
+# id_3 = "664606440100005102550210"
+# wk_id_list = [id_1,id_2,id_3]
 
-wk_id_list = [id_1,id_2,id_3]
+# id_1 = "664606440100005102550210"
+# id_2 = "664316880100008a049e890e"
+# wk_id_list = [id_1,id_2]
+    
+
+
+
 
 # img_size = 512
 # min_labels_per_image = 2
@@ -33,11 +38,11 @@ wk_id_list = [id_1,id_2,id_3]
 if config.SHOW_IMAGES:
     import matplotlib.pyplot as plt
 
-path = str(os.getcwd()) + "/dl/"
-img_dl_path = path + "images/"
-annot_dl_path = path + "annotations/"
+#path = str(os.getcwd()) + "/dl/"
+img_dl_path = config.DL_PATH + "images/"
+annot_dl_path = config.DL_PATH + "annotations/"
 
-Path(path).mkdir(parents=True, exist_ok=True)
+Path(config.DL_PATH).mkdir(parents=True, exist_ok=True)
 Path(img_dl_path).mkdir(parents=True, exist_ok=True)
 Path(annot_dl_path).mkdir(parents=True, exist_ok=True)
 if config.CLEAR_OUTPUT_DIR:
@@ -69,7 +74,7 @@ for wkid in wk_id_list:
         pSize = Pixel_size(voxel_size[0] * MAG.x, voxel_size[1] * MAG.y, voxel_size[2] * MAG.z, MAG=MAG, unit="nm")
 
         img_data = img_layer.get_mag(pSize.MAG).read()
-        lbl_data = lbl_layers[label_indices["Myelin"]].get_mag(pSize.MAG).read()
+        lbl_data = lbl_layers[label_indices[label_str]].get_mag(pSize.MAG).read()
 
     unique_lbls = np.unique(lbl_data)
 
@@ -94,7 +99,7 @@ for wkid in wk_id_list:
 
     with wk.webknossos_context():
         img_data_small = img_layer.get_finest_mag().read(absolute_bounding_box=wk_bbox)
-        lbl_data_small = lbl_layers[label_indices["Myelin"]].get_finest_mag().read(absolute_bounding_box=wk_bbox)
+        lbl_data_small = lbl_layers[label_indices[label_str]].get_finest_mag().read(absolute_bounding_box=wk_bbox)
     
     bx = wk_bbox.topleft[1]
     by = wk_bbox.topleft[0]
