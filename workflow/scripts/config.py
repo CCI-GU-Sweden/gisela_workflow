@@ -50,13 +50,15 @@ CLEAR_OUTPUT_DIR = DEBUGGING
 ORG_ID = os.getenv("ORG_ID")
 WK_TOKEN = os.getenv("WK_TOKEN")
 
-TRAINING_DATASET_FILE = "datasets/" + jconf['prefix'] + "dataset.yaml"
+DIR_PREFIX = jconf['short_name']
+
+TRAINING_DATASET_FILE = "datasets/" + DIR_PREFIX + "/dataset.yaml"
 TRAINING_EPOCHS = 300
 
-MODEL_SAVE_DIR = "models/" + jconf['prefix']
+MODEL_SAVE_DIR = "models/" + DIR_PREFIX
 MODEL_SAVE_FILE_NAME = "latest_model.pt"
 
 
 TEST_DATA_DIR = DL_PATH + "test_data/"
-TEST_IMAGE_RESULT_FILE_NAME = jconf['prefix'] + "_result.png"
+TEST_IMAGE_RESULT_FILE_NAME = DIR_PREFIX + "_result.png"
         
