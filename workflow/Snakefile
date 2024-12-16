@@ -1,9 +1,15 @@
+rule set_config_from_profile:
+    output:
+        "current_config.txt"
+    shell:
+        "echo {config[current_config]} > {output}"
+
 rule download_annotations:
     input:
         f"{workflow.basedir}/scripts/1-gisela_dl_annotations_and_images.py"
     output:  #output dir should be configurable and sent to script
-        images=directory("dl/images/"),
-        annotations=directory("dl/annotations/")
+        images=directory(f"dl/{config['current_config']}/images/"),
+        annotations=directory(f"dl/{config['current_config']}/annotations/")
     conda:
         f"{workflow.basedir}/envs/webknossos.yml"
     script:
@@ -29,6 +35,7 @@ rule create_yolo_dataset:
     script:
         f"{workflow.basedir}/scripts/3-gisela_create_yolo_dataset.py"
 
+#this rule needs fixing!!!
 rule dl_test_images:
     input:
         f"{workflow.basedir}/scripts/4-dl_test_images_for_yolo.py"
@@ -42,6 +49,8 @@ rule dl_test_images:
 rule yolo_train_py:
     input: 
         rules.create_yolo_dataset.output.dataset
+    output:
+        model=f"{os.getcwd()}/latest_model.pt"
     conda:
         f"{workflow.basedir}/envs/yolov8.yml"
     script:
@@ -56,7 +65,14 @@ rule yolo_train:
     shell:
         f"yolo segment train data={os.getcwd()}/datasets/dataset.yaml epochs=50 imgsz=512"
     
-#rule yolo_segment:
+
+rule yolo_segment:
+    input: 
+        rules.yolo_train_py.output.model
+    conda:
+        f"{workflow.basedir}/envs/yolov8.yml"
+    script:
+        f"{workflow.basedir}/scripts/segment_large_image_using_yolo.py"
 
 rule all:
     input:
