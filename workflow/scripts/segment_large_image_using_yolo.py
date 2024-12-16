@@ -89,7 +89,7 @@ def segment_with_yolo(model, data):
     results = model.predict(source=np.ascontiguousarray(data), imgsz=IMG_SIZE,show_boxes=False,show_labels=False, verbose=False)
     return results
 
-def segment_wrapper(model, out_path, data, block_id):
+def segment_wrapper(model, data, block_id):
     with model_mutex:
         print(f"computing chunk {block_id}, {data.shape}")
 
@@ -132,12 +132,15 @@ Path(out_data_dir).mkdir(parents=True, exist_ok=True)
 model = YOLO(str(base) + "/latest_model.pt")
 
 #large_image_tmp = da.array.image.imread(str(base) + "/cropped_rgb.png")
+file_dir = Path(__file__).parent.resolve()
+base = file_dir
+#base = os.getcwd()
 large_image_tmp = da.array.image.imread(str(base) + "/cropped_3904x3904.png")
 
 s = large_image_tmp.shape
 large_image = large_image_tmp.reshape((s[1],s[2])).rechunk((config.CHUNK_D_SIZE,config.CHUNK_D_SIZE,1))
 
-bound_f = partial(segment_wrapper, model, str(out_data_dir))
+bound_f = partial(segment_wrapper, model)
 #segment_results = large_image.map_blocks(bound_f, dtype=np.uint32,chunks=config.CHUNK_SHAPE)
 segment_results = da.array.map_overlap(bound_f, large_image, dtype=np.uint32, chunks=(config.CHUNK_D_SIZE,config.CHUNK_D_SIZE) ,depth=config.OVERLAP, boundary='reflect', trim=True)
 
@@ -158,7 +161,9 @@ result = combined_result.compute(scheduler='single-threaded')
 end = timer()
 print("stopping: ",end - start)
 save_im = Image.fromarray(result)
-save_im.save("result_mask.png")
+outfile = str(out_data_dir) + "/result_mask.png"
+save_im.save(outfile)
 
+print(f"Image mask saved as {outfile}")
 #save_im = Image.fromarray(list_of_all_coords.coords)
 #save_im.save("result_mask_new.png")
