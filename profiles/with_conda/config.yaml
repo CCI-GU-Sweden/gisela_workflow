@@ -2,3 +2,5 @@ use-conda: true
 conda-frontend: conda
 cores: 4
 workdir: {workflow.basedir}
+#current_config: myelin
+
