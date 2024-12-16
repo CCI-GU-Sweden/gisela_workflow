@@ -1,0 +1,9 @@
+name: snakemake
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - pip=24.2=pyh8b19718_1
+  - python=3.12.5=h2ad013b_0_cpython
+  - snakemake=8.18.2=hdfd78af_0
