@@ -5,11 +5,11 @@ import shutil
 
 import config
 
-dataset_path = str(os.getcwd()) + "/datasets/"
-img_train_path = dataset_path + "images/train/"
-img_val_path = dataset_path + "images/val/"
-labels_train_path = dataset_path + "labels/train/"
-labels_val_path = dataset_path + "labels/val/"
+dataset_path = config.DATASET_PATH# str(os.getcwd()) + "/datasets/"
+img_train_path = dataset_path + "/images/train/"
+img_val_path = dataset_path + "/images/val/"
+labels_train_path = dataset_path + "/labels/train/"
+labels_val_path = dataset_path + "/labels/val/"
 
 Path(dataset_path).mkdir(parents=True, exist_ok=True)
 Path(img_train_path).mkdir(parents=True, exist_ok=True)
@@ -25,7 +25,7 @@ if config.CLEAR_OUTPUT_DIR:
     for f in files:
         os.remove(f)
     
-dl_path = str(os.getcwd()) + "/dl/"
+dl_path = config.DL_PATH #str(os.getcwd()) + "/dl/"
 img_dl_path = dl_path + "images/"
 labels_dl_path = dl_path + "vectors/"
 
@@ -46,7 +46,7 @@ for idx,lbl in enumerate(label_vectors):
         shutil.copy2(lbl,labels_val_path)
         
 #create the dataset file it it does not exist already
-dataset_file = Path(dataset_path + "dataset.yaml")
+dataset_file = Path(config.DATASET_PATH + "/" + config.TRAINING_DATASET_FILE)
 if dataset_file.is_file():
     import sys
     sys.exit()

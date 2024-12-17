@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import glob
 from PIL import Image
-from skimage import measure
+from skimage import measure, morphology
 import numpy as np
 from pathlib import Path
 import scipy.spatial as ssp
@@ -32,18 +32,32 @@ for ann in annotations:
             
             if prop.area < 80:
                 continue
-            if config.USE_AXONS:
+            if config.USE_DOUGHNUTS:
                 shape = donuts.generate_contour(prop.image)
+                x_offs = prop.bbox[0]
+                y_offs = prop.bbox[1]
+                shape = np.add(shape,(x_offs,y_offs))
+                # points = np.divide(points,config.IMG_SIZE)
+
+            elif config.USE_CONTOURS:
+#                points = morphology.erosion(prop.image_filled,mode="constant")
+                shape = measure.find_contours(prop.image)[0]
+                #points = zip(points[:, 1],points[:,0])
+
+    
+
             else:
-                shape = prop.coords    
+                shape = prop.coords
+
+            points = np.divide(shape,config.IMG_SIZE)
+
                 
-            x_offs = prop.bbox[0]
-            y_offs = prop.bbox[1]
-            points = np.add(shape,(x_offs,y_offs))
-            points = np.divide(points,config.IMG_SIZE)
+#            else:
+#                points = prop.coords    
+                
             
             
-            points = vec_filt(points)
+            points = vec_filt(list(points))
             targets_file.write("0 ")
             np.savetxt(targets_file,points, newline=' ', fmt='%1.3f')
             targets_file.write("\n")

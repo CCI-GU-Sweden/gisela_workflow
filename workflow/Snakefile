@@ -1,25 +1,25 @@
 rule set_config_from_profile:
     output:
-        "current_config.txt"
+        conf="current_config.txt"
     shell:
         "echo {config[current_config]} > {output}"
 
 rule download_annotations:
     input:
-        f"{workflow.basedir}/scripts/1-gisela_dl_annotations_and_images.py"
+        rules.set_config_from_profile.output.conf
     output:  #output dir should be configurable and sent to script
         images=directory(f"dl/{config['current_config']}/images/"),
         annotations=directory(f"dl/{config['current_config']}/annotations/")
     conda:
         f"{workflow.basedir}/envs/webknossos.yml"
     script:
-        f"{input}"
+        f"{workflow.basedir}/scripts/1-gisela_dl_annotations_and_images.py"
 
 rule create_vector_files_yolo:
     input:
         annotations=rules.download_annotations.output.annotations
     output:  #output dir should be configurable and sent to script
-        vectors=directory("dl/vectors/")
+        vectors=directory(f"dl/{config['current_config']}/vectors/")
     conda:
         f"{workflow.basedir}/envs/webknossos.yml"
     script:
@@ -29,7 +29,7 @@ rule create_yolo_dataset:
     input:
         rules.create_vector_files_yolo.output.vectors
     output:  #output dir should be configurable and sent to script
-        dataset=directory("datasets")
+        dataset=f"datasets/{config['current_config']}/dataset.yaml"
     conda:
         f"{workflow.basedir}/envs/webknossos.yml"
     script:
@@ -50,7 +50,7 @@ rule yolo_train_py:
     input: 
         rules.create_yolo_dataset.output.dataset
     output:
-        model=f"{os.getcwd()}/latest_model.pt"
+        model=f"{os.getcwd()}/models/{config['current_config']}/latest_model.pt"
     conda:
         f"{workflow.basedir}/envs/yolov8.yml"
     script:
@@ -69,16 +69,35 @@ rule yolo_train:
 rule yolo_segment:
     input: 
         rules.yolo_train_py.output.model
+    output: 
+        out_mask=f"result/{config['current_config']}/result_mask.png"
     conda:
         f"{workflow.basedir}/envs/yolov8.yml"
     script:
         f"{workflow.basedir}/scripts/segment_large_image_using_yolo.py"
 
+
+rule clean_outputs:
+    input: 
+        dirs = [f"datasets/{config['current_config']}",f"models/{config['current_config']}",f"result/{config['current_config']}",f"dl/{config['current_config']}"]
+    shell:
+        "rm -rf {input.dirs}"
+
+rule clean_all_outputs:
+    input: 
+        dirs = ["datasets","models","result","dl"]
+    shell:
+        "rm -rf {input.dirs}"
+
+
+
 rule all:
     input:
-        rules.create_yolo_dataset.output.dataset
-
-
+        #rules.create_yolo_dataset.output.dataset
+        #rules.yolo_train_py.output.model
+        rules.yolo_segment.output.out_mask
+    shell:
+        "rm current_config.txt"
 
 # rule hello:
 #     output: 'output.txt'

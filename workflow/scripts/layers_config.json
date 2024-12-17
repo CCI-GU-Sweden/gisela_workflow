@@ -1,16 +1,27 @@
 [
+
+    {
+        "layer_name" : "Unmyelinated_axon",
+        "short_name" : "unaxon",
+        "img_size" : 1024,
+        "overlap": 24,
+        "image_id_list" : ["664316880100008a049e890e","664606440100005102550210"]
+    },
     {
         "layer_name" : "Myelin",
         "short_name" : "myelin",
         "img_size" : 1024,
         "overlap" : 24,
+        "generate_doughnuts": true,
         "image_id_list" : ["6644c04d0100004a01fa11af","664316880100008a049e890e","664606440100005102550210"]
     },
+
     {
-        "layer_name" : "Unmyelinated_axon",
-        "short_name" : "unaxon",
-        "img_size" : 512,
-        "overlap": 24,
-        "image_id_list" : ["664316880100008a049e890e","664606440100005102550210"]
+        "layer_name" : "Axon",
+        "short_name" : "axon",
+        "img_size" : 1024,
+        "overlap" : 24,
+        "image_id_list" : ["6644c04d0100004a01fa11af","664316880100008a049e890e","664606440100005102550210"]
     }
+
 ]

@@ -11,7 +11,7 @@ from scipy import ndimage, spatial
 import random
 import math
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 

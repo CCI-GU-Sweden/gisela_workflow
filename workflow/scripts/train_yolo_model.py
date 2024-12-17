@@ -9,7 +9,10 @@ import torch
 #file_dir = Path(__file__).parent.resolve()
 #base = file_dir
 #base = os.getcwd()
-dataSetFile = config.BASE_PATH + "/" + config.TRAINING_DATASET_FILE
+dataSetFile = config.DATASET_PATH + "/" + config.TRAINING_DATASET_FILE
+
+if not os.path.exists(config.MODEL_SAVE_DIR):
+    os.makedirs(config.MODEL_SAVE_DIR)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"]="expandable_segments:True"
 import gc

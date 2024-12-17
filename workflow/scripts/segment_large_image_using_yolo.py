@@ -126,10 +126,11 @@ def segment_wrapper(model, data, block_id):
     return all_masks
 
 base = os.getcwd()
-out_data_dir = Path(str(base) + "/output")
+out_data_dir = config.RESULT_OUTPUT_DIR# Path(str(base) + "/output")
 Path(out_data_dir).mkdir(parents=True, exist_ok=True)
 
-model = YOLO(str(base) + "/latest_model.pt")
+model_file_path = config.MODEL_SAVE_DIR + "/" + config.MODEL_SAVE_FILE_NAME
+model = YOLO(model_file_path)
 
 #large_image_tmp = da.array.image.imread(str(base) + "/cropped_rgb.png")
 file_dir = Path(__file__).parent.resolve()
@@ -161,7 +162,7 @@ result = combined_result.compute(scheduler='single-threaded')
 end = timer()
 print("stopping: ",end - start)
 save_im = Image.fromarray(result)
-outfile = str(out_data_dir) + "/result_mask.png"
+outfile = config.RESULT_OUTPUT_MASK_IMAGE#str(out_data_dir) + "/result_mask.png"
 save_im.save(outfile)
 
 print(f"Image mask saved as {outfile}")
