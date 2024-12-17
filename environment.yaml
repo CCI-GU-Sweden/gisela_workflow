@@ -1,0 +1,17 @@
+name: wk-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - jupyterlab
+  - ipykernel
+  - dask
+  - scikit-image
+  - matplotlib
+  - xlsxwriter
+  - pip
+  - pip:
+    - webknossos==0.15.1
+    - cattrs==23.2.3
+    - pyometiff
