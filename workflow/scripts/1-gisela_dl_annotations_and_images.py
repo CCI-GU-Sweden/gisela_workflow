@@ -85,7 +85,7 @@ for wkid in wk_id_list:
 
     segmentation = np.nonzero(lbl_dask[0,0])
 
-    bbox = 0, 0, 0, 0
+    #bbox = 0, 0, 0, 0
     #if len(segmentation) != 0 and len(segmentation[1]) != 0 and len(segmentation[0]) != 0:
     x_min = int(np.min(segmentation[1]))
     x_max = int(np.max(segmentation[1]))
@@ -106,20 +106,23 @@ for wkid in wk_id_list:
     bw = wk_bbox.size.x
     bh = wk_bbox.size.y
 
-    lbl_dask_small = da.from_array(np.swapaxes(lbl_data_small,-1,-3), chunks=(1,2,512,512))
-    img_dask_small = da.from_array(np.swapaxes(img_data_small,-1,-3), chunks=(1,2,512,512))
+    im_size = config.IMG_SIZE
+
+    lbl_dask_small = da.from_array(np.swapaxes(lbl_data_small,-1,-3), chunks=(1,2,im_size,im_size))
+    img_dask_small = da.from_array(np.swapaxes(img_data_small,-1,-3), chunks=(1,2,im_size,im_size))
 
     if config.SHOW_IMAGES:
         from matplotlib.patches import Rectangle
         ax = plt.gca()
     
-    properties = ['label', 'bbox', 'centroid']
-
-    im_size = config.IMG_SIZE
+    #properties = ['label', 'bbox', 'centroid']
     img_x_div = bw // im_size
     img_y_div = bh // im_size
-    lbl_dask_cropped = lbl_dask_small[0,0,0:img_y_div*im_size,0:img_x_div*im_size].compute()
-    img_dask_cropped = img_dask_small[0,0,0:img_y_div*im_size,0:img_x_div*im_size].compute()
+    
+    lbl_dask_cropped = lbl_dask_small[0,0,0:img_y_div*im_size,0:img_x_div*im_size]
+    img_dask_cropped = img_dask_small[0,0,0:img_y_div*im_size,0:img_x_div*im_size]
+    # lbl_dask_cropped = lbl_dask_small[0,0,0:img_y_div*im_size,0:img_x_div*im_size].compute()
+    # img_dask_cropped = img_dask_small[0,0,0:img_y_div*im_size,0:img_x_div*im_size].compute()
 
     idx = 0
     for y in range(img_y_div):
@@ -129,15 +132,15 @@ for wkid in wk_id_list:
             start_y = y * im_size
             end_x = start_x + im_size
             end_y = start_y + im_size
-            active_lbl_chunk = lbl_dask_cropped[start_y:end_y,start_x:end_x]
-            active_img_chunk = img_dask_cropped[start_y:end_y,start_x:end_x]
+            active_lbl_chunk = lbl_dask_cropped[start_y:end_y,start_x:end_x].compute()
+            active_img_chunk = img_dask_cropped[start_y:end_y,start_x:end_x].compute()
 
             regions = measure.regionprops(label_image=active_lbl_chunk)
 
             tot_elems = len(regions)
 
             if tot_elems == 0:
-                continue 
+                continue
 
             im = Image.fromarray(active_img_chunk.astype(np.uint8))
             im.save(img_dl_path + str(ANNOTATION_ID) + "_" + str(idx) + '.png')
