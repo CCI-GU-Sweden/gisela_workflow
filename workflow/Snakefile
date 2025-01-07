@@ -1,8 +1,14 @@
+if not config.get("current_config"):
+    config["current_config"] = "myelin"
+
 rule set_config_from_profile:
     output:
         conf="current_config.txt"
     shell:
-        "echo {config[current_config]} > {output}"
+        r""" 
+        echo {config[current_config]} > {output}
+        echo *** Using configuration {config[current_config]} ***
+        """
 
 rule download_annotations:
     input:
@@ -97,7 +103,7 @@ rule all:
         #rules.yolo_train_py.output.model
         rules.yolo_segment.output.out_mask
     shell:
-        "rm current_config.txt"
+        "rm -f current_config.txt"
 
 # rule hello:
 #     output: 'output.txt'
