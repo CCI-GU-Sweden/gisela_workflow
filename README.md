@@ -20,7 +20,7 @@ snakemake --profile ./profiles/with_conda yolo_train_py
 
 this trains a yolov8 model
 
-The file workflow/scripts/layers_config.json contains configuration data for the different annotations layers. if you supply --config current_confg=myelin for example, the configuration with short_name myelin will be used. Use the short_name of the configuration you would like to use.
+The file workflow/scripts/layers_config.json contains configuration data for the different annotations layers. if you supply --config current_confg=myelin for example, the configuration with short_name myelin will be used. Use the short_name of the configuration you would like to use. I no fonfigu
 
 
 

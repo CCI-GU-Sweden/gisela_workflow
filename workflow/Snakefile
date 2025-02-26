@@ -5,9 +5,11 @@ rule set_config_from_profile:
     output:
         conf="current_config.txt"
     shell:
-        r""" 
+        r"""
+        echo ----------------------------------------------------
+        echo --- Using configuration {config[current_config]} ---
+        echo ----------------------------------------------------
         echo {config[current_config]} > {output}
-        echo *** Using configuration {config[current_config]} ***
         """
 
 rule download_annotations:
@@ -99,6 +101,7 @@ rule clean_all_outputs:
 
 rule all:
     input:
+        rules.set_config_from_profile.output.conf,
         #rules.create_yolo_dataset.output.dataset
         #rules.yolo_train_py.output.model
         rules.yolo_segment.output.out_mask

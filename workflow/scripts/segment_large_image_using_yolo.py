@@ -16,6 +16,7 @@ from shapely.affinity import translate
 import threading
 import skimage.color
 from timeit import default_timer as timer
+from collections import defaultdict
 
 import config
 
@@ -24,9 +25,7 @@ model_mutex = threading.Lock()
 #overlaps_mutex = threading.Lock()
 
 random.seed()
-
-IMG_SIZE = config.IMG_SIZE
-OVERLAP = 2
+#OVERLAP = 2
 
 import threading
 class IntGenerator:
@@ -45,6 +44,15 @@ class IntGenerator:
             self.lock.release()
 
 intGen = IntGenerator()
+
+def calculate_dynamic_overlap(large_image_size, ann_size):
+    n_s = large_image_size // ann_size
+    rests = large_image_size % ann_size
+    pixels_for_next_square = ann_size-rests
+    overlap_to_distribute = pixels_for_next_square / (n_s+1)
+    
+    return overlap_to_distribute/2
+
 
 def merge_border_segments(data, block_id, img_size, scan_vertical, border_distance):
 
@@ -65,39 +73,91 @@ def merge_border_segments(data, block_id, img_size, scan_vertical, border_distan
             local_coords_mod = (0,-1)
             neighbour_coords_mod =  (0,border_distance)
             y = img_size
-    
+
+    connected_table = defaultdict(lambda: defaultdict(int))
+    max_neighbour_local_table = defaultdict(lambda: defaultdict(int))
     for coord in range(img_size):
         if scan_vertical:
             y = coord 
         else:
             x = coord
 
+        #construct table that holds which structures have most connecting pixels to the neighbour structure
         local_indices     = (x + local_coords_mod[0],     y + local_coords_mod[1])
         neighbour_indices = (x + neighbour_coords_mod[0], y + neighbour_coords_mod[1])
         id_local = data[local_indices]
         id_neighbour =  data[neighbour_indices]
         if  id_local != 0 and id_neighbour != 0 and id_neighbour != id_local:
-            print(f"merging with id: {id_local} {id_neighbour} {block_id} {scan_vertical}")
-            idxs = np.where(data == id_local)
-            data[idxs] = id_neighbour
+            
+            
+            connected_table[id_local][id_neighbour] += 1
+            max_neighbour_local_table[id_neighbour][id_local] += 1 
+            
+            # if id_local not in connected_table:
+
+
+            #     neighbour_start_coords = neighbour_indices
+            #     connected_table[id_local] = {'cnt': 0, 
+            #                                  'neighbour': neighbour_start_coords }
+            # connected_table[id_local]['cnt'] += 1
+        
+        #unfiltered = [key for key in connected_table] 
+        
+        #filter table to keep only the keys of a certain neighbour_id that has the highest cnt (most connecting pixels)
+        # filtered = [key for key in connected_table 
+        #             if all(connected_table[i]['cnt'] >= connected_table[key]['cnt'] for i in 
+        #             [t for t in connected_table if connected_table[t]['neighbour_id'] == connected_table[key]['neighbour_id']])]     
+
+        #print(f"filtered list: {filtered}, unfiltered: {connected_table}")
+
+    #only keep the maximum values per neighbour
+    neighbour_max = {}
+    for outer_key in max_neighbour_local_table.keys():
+        max_cnt = 0
+        id = max_neighbour_local_table[outer_key]
+        id = {k: v for k, v in id.items() if v == max(id.values())}
+        neighbour_max[outer_key] = list(id.keys())[0]
+                
+    for n in neighbour_max.keys():
+        loc = neighbour_max[n]
+        for l in connected_table.keys():
+            if l != loc: #we know this is NOT the local id that should be set to neighbour
+                connected_table[l][n] = 0
+
+    filtered = []
+    for idx, outer_key in enumerate(connected_table.keys()):
+        max_cnt = 0
+        filtered.append((outer_key,0))
+        for inner_key in connected_table[outer_key].keys():
+            value = connected_table[outer_key][inner_key]
+            if value > max_cnt:
+                filtered[idx] = (outer_key,inner_key)
+                
+    #merge data in local and neighbour structures
+    for (l,n) in filtered:
+        id_l = l
+        id_n = n#connected_table[f]['neighbour_id']
+        print(f"merging with id: {id_l} {id_n} {block_id} {scan_vertical}")
+        idxs = np.where(data == id_l)
+        data[idxs] = id_n
 
     return data
 
 
 @da.delayed
-def segment_with_yolo(model, data):
-    results = model.predict(source=np.ascontiguousarray(data), imgsz=IMG_SIZE,show_boxes=False,show_labels=False, verbose=False)
+def segment_with_yolo(model, data, dimension):
+    results = model.predict(source=np.ascontiguousarray(data), imgsz=dimension,show_boxes=False,show_labels=False, verbose=False)
     return results
 
-def segment_wrapper(model, data, block_id):
+def segment_wrapper(model, dimension, data, block_id):
     with model_mutex:
         print(f"computing chunk {block_id}, {data.shape}")
 
         rgb_data = skimage.color.gray2rgb(data)
-        result = segment_with_yolo(model,rgb_data)
+        result = segment_with_yolo(model,rgb_data, dimension)
         computed_result = result.compute()
              
-    all_masks = np.zeros(shape=(IMG_SIZE,IMG_SIZE), dtype=np.uint32)
+    all_masks = np.zeros(shape=(dimension,dimension), dtype=np.uint32)
     if computed_result is None or computed_result[0].masks is None:
         return all_masks
     
@@ -116,7 +176,8 @@ def segment_wrapper(model, data, block_id):
         mask = np.expand_dims(mask,axis=2)
         
         mask = np.squeeze(mask).astype(np.uint32)
-        if shape[1] != IMG_SIZE or shape[2] != IMG_SIZE: 
+        if shape[1] != dimension or shape[2] != dimension: 
+            print(f"wrong size {shape[1]} {shape[2]}")
             #all_masks[:sh1, :sh2,:] = np.where(all_masks[:sh1, :sh2,:] == 0, mask, all_masks[:sh1, :sh2,:])
             all_masks[:sh1, :sh2] = np.where(all_masks[:sh1, :sh2] == 0, mask, all_masks[:sh1, :sh2])
         else:
@@ -132,25 +193,40 @@ Path(out_data_dir).mkdir(parents=True, exist_ok=True)
 model_file_path = config.MODEL_SAVE_DIR + "/" + config.MODEL_SAVE_FILE_NAME
 model = YOLO(model_file_path)
 
+
+
 #large_image_tmp = da.array.image.imread(str(base) + "/cropped_rgb.png")
 file_dir = Path(__file__).parent.resolve()
 base = file_dir
 #base = os.getcwd()
-large_image_tmp = da.array.image.imread(str(base) + "/cropped_3904x3904.png")
+#large_image_tmp = da.array.image.imread(str(base) + "/cropped_3904x3904.png")
+large_image_tmp = da.array.image.imread(str(base) + "/testimage.png")
 
 s = large_image_tmp.shape
-large_image = large_image_tmp.reshape((s[1],s[2])).rechunk((config.CHUNK_D_SIZE,config.CHUNK_D_SIZE,1))
+img_size = config.IMG_SIZE
+overlap = config.OVERLAP
+chunk_size = config.CHUNK_D_SIZE
+if config.USE_DYNAMIC_OVERLAP:
+    overlap = int(calculate_dynamic_overlap(s[1],img_size))
+    chunk_size =int(img_size - (2 * overlap))
 
-bound_f = partial(segment_wrapper, model)
-#segment_results = large_image.map_blocks(bound_f, dtype=np.uint32,chunks=config.CHUNK_SHAPE)
-segment_results = da.array.map_overlap(bound_f, large_image, dtype=np.uint32, chunks=(config.CHUNK_D_SIZE,config.CHUNK_D_SIZE) ,depth=config.OVERLAP, boundary='reflect', trim=True)
 
+large_image = large_image_tmp.reshape((s[1],s[2])).rechunk((chunk_size,chunk_size,1))
+#large_image = large_image_tmp.rechunk((chunk_size,chunk_size,1))
+
+
+
+
+bound_f = partial(segment_wrapper, model, img_size)
+#segment_results = da.array.map_overlap(bound_f, large_image, dtype=np.uint32, chunks=(config.CHUNK_D_SIZE,config.CHUNK_D_SIZE) ,depth=config.OVERLAP, boundary='reflect', trim=True)
+segment_results = da.array.map_overlap(bound_f, large_image, dtype=np.uint32, chunks=(chunk_size,chunk_size) ,depth=overlap, boundary='reflect', trim=True)
 border_distance_to_check = 0
 
-merge_horizontal = partial(merge_border_segments,img_size = config.CHUNK_D_SIZE, scan_vertical = False, border_distance = border_distance_to_check)
-horizontal_result = segment_results.map_overlap(merge_horizontal,dtype=np.uint32,depth={0: (0,2),1: (0,2)}, boundary=None)
+merge_horizontal = partial(merge_border_segments,img_size = chunk_size, scan_vertical = False, border_distance = border_distance_to_check)
+#horizontal_result = segment_results.map_overlap(merge_horizontal,dtype=np.uint32,depth={0: (0,2),1: (0,2)}, boundary=None)
+horizontal_result = segment_results.map_overlap(merge_horizontal,dtype=np.uint32,depth={0: (0,2),1: (0,2)}, boundary=None, trim=True)
 
-merge_vertical = partial(merge_border_segments,img_size = config.CHUNK_D_SIZE, scan_vertical = True, border_distance = border_distance_to_check)
+merge_vertical = partial(merge_border_segments,img_size = chunk_size, scan_vertical = True, border_distance = border_distance_to_check)
 combined_result = horizontal_result.map_overlap(merge_vertical,dtype=np.uint32,depth={0: (0,2),1: (0,2)}, boundary=None)
 
 print("starting...")

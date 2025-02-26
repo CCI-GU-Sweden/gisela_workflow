@@ -37,9 +37,10 @@ WK_ID_LIST = jconf['image_id_list']
 
 IMG_SIZE = jconf['img_size']
 NETWORK_SIZE = IMG_SIZE
+USE_DYNAMIC_OVERLAP = True #experimental, calculates overlap from image dimensions in order to remove size contraint on image
 OVERLAP = jconf['overlap']
 CHUNK_D_SIZE = IMG_SIZE - (2 * OVERLAP)
-CHUNK_SHAPE = (CHUNK_D_SIZE,CHUNK_D_SIZE,1)
+#CHUNK_SHAPE = (CHUNK_D_SIZE,CHUNK_D_SIZE,1)
 
 BASE_PATH = str(os.getcwd())
 DIR_PREFIX = jconf['short_name']

@@ -20,7 +20,7 @@ import gc
 
 
 model = YOLO("yolov8n-seg.pt")
-results = model.train(data=dataSetFile,epochs=config.TRAINING_EPOCHS, imgsz=config.IMG_SIZE, show_boxes=False, show_labels=False, batch=6)
+results = model.train(data=dataSetFile,epochs=config.TRAINING_EPOCHS, imgsz=config.IMG_SIZE, show_boxes=False, show_labels=False, batch=5)
 results = model.val()
 
 torch.cuda.empty_cache()
