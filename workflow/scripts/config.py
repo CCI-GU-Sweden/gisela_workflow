@@ -7,14 +7,12 @@ DEBUGGING = True
 
 dotenv.load_dotenv()
 
-
 ldir = pathlib.Path(__file__).parent.resolve()
-
 
 with open(str(ldir) + '/layers_config.json') as f:
     jconfs = json.load(f)
 
-fp = os.getcwd() +'/current_config.txt'
+fp = os.getcwd() + '/current_config.txt'
 has_layer_conf = os.path.isfile(fp)
 jconf = jconfs[0]
 
@@ -33,7 +31,6 @@ USE_DOUGHNUTS = jconf['generate_doughnuts'] if 'generate_doughnuts' in jconf els
 USE_CONTOURS = jconf['use_contours'] if 'use_contours' in jconf else False
 
 ANNOTATION_LAYER_NAME = jconf['layer_name']
-WK_ID_LIST = jconf['image_id_list']
 
 IMG_SIZE = jconf['img_size']
 NETWORK_SIZE = IMG_SIZE

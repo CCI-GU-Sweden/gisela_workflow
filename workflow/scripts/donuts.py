@@ -10,8 +10,7 @@ from skimage import draw, measure
 from scipy import ndimage, spatial
 import random
 import math
-
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 
@@ -251,7 +250,7 @@ def generate_contour(donut, biggest_only=True, as_hull_coo=True, smooth_contours
     return contours
 
 if __name__ == "__main__":
-    __DEBUG = False
+    __DEBUG = True
     donut = noisy_donuts((255, 255), 50, random.randint(8, 20), .2)
     contour = generate_contour(donut)
 
