@@ -1,11 +1,9 @@
-from pathlib import Path
 import os
 import glob
 from PIL import Image
 from skimage import measure, morphology
 import numpy as np
 from pathlib import Path
-import scipy.spatial as ssp
 import config
 import donuts
 
@@ -44,19 +42,10 @@ for ann in annotations:
                 shape = measure.find_contours(prop.image)[0]
                 #points = zip(points[:, 1],points[:,0])
 
-    
-
             else:
                 shape = prop.coords
 
             points = np.divide(shape,config.IMG_SIZE)
-
-                
-#            else:
-#                points = prop.coords    
-                
-            
-            
             points = vec_filt(list(points))
             targets_file.write("0 ")
             np.savetxt(targets_file,points, newline=' ', fmt='%1.3f')

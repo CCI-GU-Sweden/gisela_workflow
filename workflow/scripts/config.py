@@ -31,6 +31,7 @@ USE_DOUGHNUTS = jconf['generate_doughnuts'] if 'generate_doughnuts' in jconf els
 USE_CONTOURS = jconf['use_contours'] if 'use_contours' in jconf else False
 
 ANNOTATION_LAYER_NAME = jconf['layer_name']
+WK_ID_LIST = jconf['image_id_list']
 
 IMG_SIZE = jconf['img_size']
 NETWORK_SIZE = IMG_SIZE
